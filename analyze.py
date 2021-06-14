@@ -22,6 +22,7 @@ import numpy as np
 import NormalVectorNode
 import LogNode
 
+
 def create_plots(fc, layout):
     # create plot widgets and adjust them on right position
     channels = ["accelX", "accelY", "accelZ"]
@@ -43,6 +44,7 @@ def create_plots(fc, layout):
     # connect buffers with plot nodes
     connect_buffer_with_plot(buffer_nodes, pw_nodes)
 
+
 # create plot widgets for each channel of the dippid node
 def create_plot_widgets(channels, layout):
     list = []
@@ -50,12 +52,14 @@ def create_plot_widgets(channels, layout):
         list.append(create_plot_widget(channels[i], [0, i+1], layout))
     return list
 
+
 def create_plot_widget(name, pos, layout):
     pw = pg.PlotWidget()
     layout.addWidget(pw, pos[0], pos[1])
     pw.setTitle(name)
     pw.setYRange(-1, 1)
     return pw
+
 
 # init plot nodes and set according plot
 def init_plot_nodes(pws, fc):
@@ -70,12 +74,14 @@ def init_plot_node(plot, pos, fc):
     pwNode.setPlot(plot)
     return pwNode
 
+
 # create as many buffernodes as plotnodes
 def create_buffer_nodes(fc, pws):
     buffer_nodes = []
     for i in range(len(pws)):
         buffer_nodes.append(fc.createNode('Buffer', pos=(0, -50 - i*50)))
     return buffer_nodes
+
 
 # create Normalvector plot widget, plotnode and node and connect terminals
 def create_normvec_plot(dippidNode):
@@ -86,22 +92,25 @@ def create_normvec_plot(dippidNode):
     fc.connectTerminals(dippidNode["accelX"], normvec_node["axisIn1"])
     fc.connectTerminals(dippidNode["accelY"], normvec_node["axisIn2"])
     fc.connectTerminals(normvec_node["dataOut"], plot_node["In"])
-    log_node = fc.createNode("LogNode", pos=(1000,1000))
+    log_node = fc.createNode("LogNode", pos=(1000, 1000))
     fc.connectTerminals(normvec_node["dataOut"], log_node["In"])
+
 
 # create plotwidget of normalvector
 def create_normvec_pw():
     pw = pg.PlotWidget()
-    layout.addWidget(pw, 1,2)
+    layout.addWidget(pw, 1, 2)
     pw.setTitle("NormalVector")
     pw.setYRange(-1, 1)
     pw.setXRange(0, 1)
     return pw
-        
+
+
 # connect the dippidNode with the bufferNodes
 def connect_dippid_with_buffer(fc, dippidNode, channels, buffer_nodes):
     for i in range(len(channels)):
         fc.connectTerminals(dippidNode[channels[i]], buffer_nodes[i]['dataIn'])
+
 
 # connect the bufferNodes with the dippidNodes
 def connect_buffer_with_plot(buffer_nodes, plot_nodes):
@@ -111,7 +120,18 @@ def connect_buffer_with_plot(buffer_nodes, plot_nodes):
         for i in range(len(buffer_nodes)):
             fc.connectTerminals(buffer_nodes[i]['dataOut'], plot_nodes[i]['In'])
 
+
+def get_port():
+    if len(sys.argv) != 2:
+        print("Usage: python3 analyze.py <PORT>")
+        exit(1)
+    else:
+        # don't know how to implement port into dippid
+        port = sys.argv[1]
+
+
 if __name__ == '__main__':
+    get_port()
     app = QtGui.QApplication([])
     win = QtGui.QMainWindow()
     win.setWindowTitle('DIPPIDNode demo')
