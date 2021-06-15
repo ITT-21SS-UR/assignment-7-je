@@ -1,0 +1,25 @@
+written by joshua benker
+__________________________
+7.1: A short introduction to Digital Signal Processing
+
+1) What is the defining property of Gaussian noise?
+The defining property is that the probability of the Gaussian Noise is normally distributed. It was named after
+the german mathematician Karl Friedrich Gauss. It has a probability density function, short "pdf". The function 
+can be described as an exponentiell function whose negative exponent is the variance and the expected value. 
+It is normalized by a prefactor so that the content always equals 1. 
+(Smith, S., The Scientist and Engineer's Guide to Digital Signal Processing, 1999, Chapter 15, p.178-181)
+
+2) What does a low-pass filter do in general?
+A low-pass filter is an filter that transmits only frequencies below a prescribed frequency limit.
+It is composed of a selection of adjacent positive points and the output signlas is a weighted average
+of many adjacent points from the input signla. The high frequency components will be removed.
+digital low-pass filters are used e.g. for noise reduction, wave shaping and signal separation.
+(Smith, S., The Scientist and Engineer's Guide to Digital Signal Processing, 1999, Chapter 7, p.128)
+
+3) Is a moving average filter a low-pass or a high-pass filter? Why?
+The moving average filter is a more simplier to a low-pass filter, as described by Smith (1999) an 
+"exceptionally bad low-pass filter", and it is used for smoothing an array of sampled signal.
+The moving average filter takes a number of samples from the input signal at a time and takes the 
+average of those to produce a single point in the output signal. This filter is good for time domain 
+encoded signals, but in contraire not so good for frequency domain encoded signal.
+(Smith, S., The Scientist and Engineer's Guide to Digital Signal Processing, 1999, Chapter 15, p.178-181)
