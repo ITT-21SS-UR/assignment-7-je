@@ -140,8 +140,8 @@ class Game(QtWidgets.QWidget):
         self.init_body()
         self.init_ball()
         self.timer = QtCore.QTimer(self)
-        self.xPos_bt = 0
-        self.yPos_bt = 0
+        self.xPos_bt = self.frameGeometry().width() / 2 - BODY_WIDTH / 2
+        self.yPos_bt = self.frameGeometry().height() - BODY_HEIGHT
         self.info = QtCore.QRect(0, self.frameGeometry().height() / 2,self.frameGeometry().width(), 100)
         self.points_box = QtCore.QRect(10, 0, self.frameGeometry().width(), 30)
         self.game_state = GameState.INTRO
@@ -197,7 +197,6 @@ class Game(QtWidgets.QWidget):
     def init_body(self):
         self.xPos_bt = self.frameGeometry().width() / 2 - BODY_WIDTH / 2
         self.yPos_bt = self.frameGeometry().height() - BODY_HEIGHT
-
         self.body_bottom = Body(self.xPos_bt, self.yPos_bt, BODY_WIDTH, BODY_HEIGHT, self, 'bottom')
         self.body_top = Body(self.xPos_bt, 0, BODY_WIDTH, BODY_HEIGHT, self, 'top')
  
@@ -224,7 +223,10 @@ class Game(QtWidgets.QWidget):
         if self.game_state == GameState.LOST:
             self.game_state = GameState.START
             self.points = 0
+            self.body_bottom.moveTo(self.xPos_bt,self.yPos_bt)
+            self.body_top.moveTo(self.xPos_bt, 0)
             self.init_ball()
+            
 
     #game loop gets called by the timer
     def game_loop(self):
