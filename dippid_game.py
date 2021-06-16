@@ -7,10 +7,13 @@ from enum import Enum
 from PyQt5 import QtGui, QtCore, QtWidgets
 from DIPPID import SensorUDP
 
+SENSOR_PORT = 5700
+
 WINDOW_WIDTH = 650
 WINDOW_HEIGHT = 650
 BODY_WIDTH = 100
 BODY_HEIGHT = 30
+
 
 #state of the game
 class GameState(Enum):
@@ -143,7 +146,7 @@ class Game(QtWidgets.QWidget):
         self.xPos_bt = self.frameGeometry().width() / 2 - BODY_WIDTH / 2
         self.yPos_bt = self.frameGeometry().height() - BODY_HEIGHT
         self.info = QtCore.QRect(0, self.frameGeometry().height() / 2,self.frameGeometry().width(), 100)
-        self.points_box = QtCore.QRect(10, 0, self.frameGeometry().width(), 30)
+        self.points_box = QtCore.QRect(20, 10, self.frameGeometry().width(), 40)
         self.game_state = GameState.INTRO
         self.init_timer_game_loop()
         self.show()
@@ -167,11 +170,13 @@ class Game(QtWidgets.QWidget):
 
     #paints the ball
     def draw_ball(self, painter):
-        painter.setBrush(QtGui.QBrush(QtCore.Qt.green, QtCore.Qt.SolidPattern))
+        painter.setBrush(QtGui.QBrush(QtCore.Qt.cyan, QtCore.Qt.SolidPattern))
+        painter.setPen(QtGui.QPen(QtCore.Qt.cyan, QtCore.Qt.SolidPattern))
         painter.drawEllipse(self.ball.x, self.ball.y, self.ball.radius, self.ball.radius)
 
     #paints the intro message
     def draw_intro_message(self, painter):
+        painter.setPen(QtGui.QPen(QtCore.Qt.black, QtCore.Qt.SolidPattern))
         text = "Welcome.\nPress 'Button 1' to start.\nUse your phone to move " \
                "the two objects by tilting it. \n You are both players."
         painter.drawText(self.info, QtCore.Qt.AlignCenter, text)
@@ -184,13 +189,14 @@ class Game(QtWidgets.QWidget):
 
     #paints the points the player achieves
     def draw_points(self,painter):
-        points = "Points " + str(self.points)
+        painter.setPen(QtGui.QPen(QtCore.Qt.black, QtCore.Qt.SolidPattern))
+        points = "Points: " + str(self.points)
         painter.drawText(self.points_box, QtCore.Qt.AlignLeft, points)
 
     #initialize the sensor on port 5700
     def init_sensor(self):
         BUTTON_START = 'button_1'
-        self.sensor = SensorUDP(5700)
+        self.sensor = SensorUDP(SENSOR_PORT)
         self.sensor.register_callback(BUTTON_START, self.button_start_pressed)
 
     #initialize the two bodies with the class 'Body'
@@ -222,10 +228,7 @@ class Game(QtWidgets.QWidget):
             self.game_state = GameState.START
         if self.game_state == GameState.LOST:
             self.game_state = GameState.START
-            self.points = 0
-            self.body_bottom.moveTo(self.xPos_bt,self.yPos_bt)
-            self.body_top.moveTo(self.xPos_bt, 0)
-            self.init_ball()
+            self.start_new_round()
             
 
     #game loop gets called by the timer
@@ -246,6 +249,13 @@ class Game(QtWidgets.QWidget):
     def on_gameover(self):
         self.game_state = GameState.LOST
         self.update()
+
+    #gets called when the player starts a new round after he lost
+    def start_new_round(self):
+        self.points = 0
+        self.body_bottom.moveTo(self.xPos_bt,self.yPos_bt)
+        self.body_top.moveTo(self.xPos_bt, 0)
+        self.init_ball()
 
 
 if __name__ == "__main__":
