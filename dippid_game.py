@@ -56,25 +56,20 @@ class Game(QtWidgets.QWidget):
     # initialize the painter and calls the info depending on the game state
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
+        # draws bodies
         self.draw_body(painter)
-        self.draw_ball(painter)
-        self.draw_points(painter)
+        # draws ball
+        painter.setBrush(QtGui.QBrush(QtCore.Qt.cyan, QtCore.Qt.SolidPattern))
+        painter.setPen(QtGui.QPen(QtCore.Qt.cyan, QtCore.Qt.SolidPattern))
+        painter.drawEllipse(self.ball.x, self.ball.y, self.ball.radius, self.ball.radius)
+        # draws points the player achieves
+        painter.setPen(QtGui.QPen(QtCore.Qt.black, QtCore.Qt.SolidPattern))
+        points = "Points: " + str(self.points)
+        painter.drawText(self.points_box, QtCore.Qt.AlignLeft, points)
         if self.game_state == GameState.INTRO:
             self.draw_intro_message(painter)
         elif self.game_state == GameState.LOST:
             self.draw_gamover_message(painter)
-
-    # paints the bodies
-    def draw_body(self, painter):
-        painter.setBrush(QtGui.QBrush(QtCore.Qt.blue, QtCore.Qt.SolidPattern))
-        painter.drawRect(self.body_bottom)
-        painter.drawRect(self.body_top)
-
-    # paints the ball
-    def draw_ball(self, painter):
-        painter.setBrush(QtGui.QBrush(QtCore.Qt.cyan, QtCore.Qt.SolidPattern))
-        painter.setPen(QtGui.QPen(QtCore.Qt.cyan, QtCore.Qt.SolidPattern))
-        painter.drawEllipse(self.ball.x, self.ball.y, self.ball.radius, self.ball.radius)
 
     # paints the intro message
     def draw_intro_message(self, painter):
@@ -89,11 +84,10 @@ class Game(QtWidgets.QWidget):
                 "You made " + str(self.points) + " points \nPress 'Button 1' to restart."
         painter.drawText(self.info, QtCore.Qt.AlignCenter, text)
 
-    # paints the points the player achieves
-    def draw_points(self, painter):
-        painter.setPen(QtGui.QPen(QtCore.Qt.black, QtCore.Qt.SolidPattern))
-        points = "Points: " + str(self.points)
-        painter.drawText(self.points_box, QtCore.Qt.AlignLeft, points)
+    def draw_body(self, painter):
+        painter.setBrush(QtGui.QBrush(QtCore.Qt.blue, QtCore.Qt.SolidPattern))
+        painter.drawRect(self.body_bottom)
+        painter.drawRect(self.body_top)
 
     # initialize the sensor on port 5700
     def init_sensor(self):
@@ -136,12 +130,12 @@ class Game(QtWidgets.QWidget):
     def game_loop(self):
         if self.game_state == GameState.START:
             if self.sensor.has_capability('accelerometer'):
-                sensorVal = self.sensor.get_value('accelerometer')
+                value_sensor = self.sensor.get_value('accelerometer')
             else:
                 return
-            value_y = sensorVal['y']
-            self.body_bottom.move(value_y * 7)
-            self.body_top.move(value_y * 7)
+            value_y = value_sensor['y']
+            self.body_bottom.move(value_y * 10)
+            self.body_top.move(value_y * 10)
             self.ball.move()
             self.update()
 
@@ -211,9 +205,9 @@ class Ball:
         hit = self.touch_body(self.window.body_bottom)
         if hit is False:
             hit = self.touch_body(self.window.body_top)
-        if hit == 1:
+        if hit == 'out':
             self.speed_x *= -1
-        elif hit == 2:
+        elif hit == 'in':
             self.window.points += 1
             self.speed_y *= -1
 
@@ -225,31 +219,34 @@ class Ball:
             self.speed_y *= -1
 
     # calculates the distance and returns where the ball hit the body
-    def touch_body(self, rect):
+    def touch_body(self, body):
         x_middle = self.x + self.radius
         y_middle = self.y + self.radius
         x_value = x_middle
         y_value = y_middle
 
-        if y_middle > rect.bottom():
-            y_value = rect.bottom()
-        elif y_middle < rect.top():
-            y_value = -rect.top()
-        if x_middle < rect.left():
-            x_value = rect.left()
-        elif x_middle > rect.right():
-            x_value = rect.right()
+        if y_middle > body.bottom():
+            y_value = body.bottom()
+        elif y_middle < body.top():
+            y_value = -body.top()
+        if x_middle < body.left():
+            x_value = body.left()
+        elif x_middle > body.right():
+            x_value = body.right()
 
         distance_x = x_middle - x_value
         distance_y = y_middle - y_value
         distance = math.sqrt(distance_x ** 2 + distance_y ** 2)
 
+        # returns 'in' if the ball is still in the game
+        # 'out' when the player hit the ball on the side
         if distance <= self.radius:
             if distance_x == 0:
-                return 2
+                return 'in'
             elif distance_y == 0:
-                return 1
+                return 'out'
 
+        # if the ball didn't touch the body
         return False
 
     # checks if player is game over
