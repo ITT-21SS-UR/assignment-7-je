@@ -1,11 +1,12 @@
 #script written by joshua benker
 
+import sys
 import math
 import random
-import sys
-from enum import Enum
 from PyQt5 import QtGui, QtCore, QtWidgets
 from DIPPID import SensorUDP
+from enum import Enum
+
 
 SENSOR_PORT = 5700
 
@@ -20,106 +21,6 @@ class GameState(Enum):
     INTRO = 1
     START = 2
     LOST = 3
-
-#class for the body
-#handles moving depending on the body-type (bottom or top body)
-class Body(QtCore.QRect):
-
-    def __init__(self, x, y, width, height, window, body_type):
-        super().__init__(x, y, width, height)
-        self.window = window
-        self.body_width = width
-        self.body_height = height
-        self.body_type = body_type
-
-    def move(self, value_y):
-        if self.body_type == 'bottom':
-            self.moveLeft(self.x() + value_y)
-            if self.x() < 0:
-                self.moveLeft(0)
-            elif self.x() > self.window.frameGeometry().width() - self.body_width:
-                self.moveLeft(self.window.frameGeometry().width() - self.body_width)
-        elif self.body_type == 'top':
-            self.moveLeft(self.x() - value_y)
-            if self.x() < 0:
-                self.moveLeft(0)
-            elif self.x() > self.window.frameGeometry().width() - self.body_width:
-                self.moveLeft(self.window.frameGeometry().width() - self.body_width)
-
-#class for the ball
-#handles moving and if it hits the window or the body
-class Ball:
-
-    def __init__(self, x, y, diameter, window):
-        self.window = window
-        self.x = x
-        self.y = y
-        self.diameter = diameter
-        self.radius = diameter / 2
-        self.speed_x = 6
-        self.speed_y = -6
-
-    #handles ball-moving
-    def move(self):
-        self.x += self.speed_x
-        self.y += self.speed_y
-        self.hit_window()
-        self.hit_body()
-        self.is_gameover()
-
-    #checks if ball hits the body
-    def hit_body(self):
-        hit = self.touch_body(self.window.body_bottom)
-        if hit == False:
-            hit = self.touch_body(self.window.body_top)
-        if hit == 1:
-            self.speed_x *= -1
-        elif hit == 2:
-            self.window.points += 1
-            self.speed_y *= -1
-
-    #checks if ball hits the window   
-    def hit_window(self):
-        if self.x + self.radius * 2 > self.window.frameGeometry().width() or self.x <= 0:
-            self.speed_x *= -1
-
-        elif self.y <= 0:
-            self.speed_y *= -1
-
-
-    #calculates the distance and returns where the ball hit the body 
-    def touch_body(self, rect):
-        x_middle = self.x + self.radius
-        y_middle = self.y + self.radius
-        x_value = x_middle
-        y_value = y_middle
-
-        if y_middle > rect.bottom():
-            y_value = rect.bottom()
-        elif y_middle < rect.top():
-            y_value = -rect.top()
-        if x_middle < rect.left():
-            x_value = rect.left()
-        elif x_middle > rect.right():
-            x_value = rect.right()
-
-        dist_x = x_middle - x_value
-        dist_y = y_middle - y_value
-        distance = math.sqrt(dist_x **2 + dist_y **2)
-
-        if distance <= self.radius:
-            if dist_x == 0:
-                return 2
-            elif dist_y == 0:
-                return 1
-
-        return False
-
-    #checks if player is game over
-    def is_gameover(self):
-        if self.y > self.window.frameGeometry().height() or self.y <= 0:
-            self.window.on_gameover()
-
 
 #main game class
 #neccesssary: an android phone to get the dippid sensor output
@@ -257,8 +158,107 @@ class Game(QtWidgets.QWidget):
         self.body_top.moveTo(self.xPos_bt, 0)
         self.init_ball()
 
+#class for the body
+#handles moving depending on the body-type (bottom or top body)
+class Body(QtCore.QRect):
+
+    def __init__(self, x, y, width, height, window, body_type):
+        super().__init__(x, y, width, height)
+        self.window = window
+        self.body_width = width
+        self.body_height = height
+        self.body_type = body_type
+
+    def move(self, value_y):
+        if self.body_type == 'bottom':
+            self.moveLeft(self.x() + value_y)
+            if self.x() < 0:
+                self.moveLeft(0)
+            elif self.x() > self.window.frameGeometry().width() - self.body_width:
+                self.moveLeft(self.window.frameGeometry().width() - self.body_width)
+        elif self.body_type == 'top':
+            self.moveLeft(self.x() - value_y)
+            if self.x() < 0:
+                self.moveLeft(0)
+            elif self.x() > self.window.frameGeometry().width() - self.body_width:
+                self.moveLeft(self.window.frameGeometry().width() - self.body_width)
+
+#class for the ball
+#handles moving and if it hits the window or the body
+class Ball:
+
+    def __init__(self, x, y, diameter, window):
+        self.window = window
+        self.x = x
+        self.y = y
+        self.diameter = diameter
+        self.radius = diameter / 2
+        self.speed_x = 6
+        self.speed_y = -6
+
+    #handles ball-moving
+    def move(self):
+        self.x += self.speed_x
+        self.y += self.speed_y
+        self.hit_window()
+        self.hit_body()
+        self.is_gameover()
+
+    #checks if ball hits the body
+    def hit_body(self):
+        hit = self.touch_body(self.window.body_bottom)
+        if hit == False:
+            hit = self.touch_body(self.window.body_top)
+        if hit == 1:
+            self.speed_x *= -1
+        elif hit == 2:
+            self.window.points += 1
+            self.speed_y *= -1
+
+    #checks if ball hits the window   
+    def hit_window(self):
+        if self.x + self.radius * 2 > self.window.frameGeometry().width() or self.x <= 0:
+            self.speed_x *= -1
+
+        elif self.y <= 0:
+            self.speed_y *= -1
+
+
+    #calculates the distance and returns where the ball hit the body 
+    def touch_body(self, rect):
+        x_middle = self.x + self.radius
+        y_middle = self.y + self.radius
+        x_value = x_middle
+        y_value = y_middle
+
+        if y_middle > rect.bottom():
+            y_value = rect.bottom()
+        elif y_middle < rect.top():
+            y_value = -rect.top()
+        if x_middle < rect.left():
+            x_value = rect.left()
+        elif x_middle > rect.right():
+            x_value = rect.right()
+
+        distance_x = x_middle - x_value
+        distance_y = y_middle - y_value
+        distance = math.sqrt(distance_x **2 + distance_y **2)
+
+        if distance <= self.radius:
+            if distance_x == 0:
+                return 2
+            elif distance_y == 0:
+                return 1
+
+        return False
+
+    #checks if player is game over
+    def is_gameover(self):
+        if self.y > self.window.frameGeometry().height() or self.y <= 0:
+            self.window.on_gameover()
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     game = Game()
     app.exec()
+
